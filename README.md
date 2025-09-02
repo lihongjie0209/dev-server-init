@@ -31,11 +31,11 @@
 
 ```bash
 # 克隆仓库
-git clone <repository-url>
+git clone https://github.com/lihongjie0209/dev-server-init.git
 cd dev-server-init
 
 # 或直接下载脚本文件
-wget https://raw.githubusercontent.com/<user>/<repo>/main/init-dev-server.sh
+wget https://raw.githubusercontent.com/lihongjie0209/dev-server-init/main/init-dev-server.sh
 ```
 
 ### 2. 添加执行权限

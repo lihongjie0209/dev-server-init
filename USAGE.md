@@ -18,7 +18,7 @@
 如果您将代码上传到 GitHub，用户可以直接运行：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/dev-server-init/main/init-dev-server.sh | bash
+curl -fsSL https://raw.githubusercontent.com/lihongjie0209/dev-server-init/main/init-dev-server.sh | bash
 ```
 
 ## 功能验证

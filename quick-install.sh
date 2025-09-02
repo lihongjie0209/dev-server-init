@@ -21,7 +21,7 @@ TEMP_DIR=$(mktemp -d)
 cd "$TEMP_DIR"
 
 echo "下载初始化脚本..."
-curl -fsSL -o init-dev-server.sh https://raw.githubusercontent.com/YOUR_USERNAME/dev-server-init/main/init-dev-server.sh
+curl -fsSL -o init-dev-server.sh https://raw.githubusercontent.com/lihongjie0209/dev-server-init/main/init-dev-server.sh
 
 echo "添加执行权限..."
 chmod +x init-dev-server.sh
