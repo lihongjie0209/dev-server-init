@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  dev-server-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dev-server-test
+    volumes:
+      - ./test-docker.sh:/home/testuser/test-docker.sh:ro
+      - ./init-dev-server.sh:/home/testuser/init-dev-server.sh:ro
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+      - TZ=Asia/Shanghai
+    working_dir: /home/testuser
+    command: bash -c "chmod +x /home/testuser/test-docker.sh && /home/testuser/test-docker.sh"
+    
+  # 交互式测试容器
+  dev-server-interactive:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dev-server-interactive
+    volumes:
+      - ./init-dev-server.sh:/home/testuser/init-dev-server.sh:ro
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+      - TZ=Asia/Shanghai
+    working_dir: /home/testuser
+    command: bash
+    stdin_open: true
+    tty: true
