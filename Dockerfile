@@ -25,9 +25,10 @@ WORKDIR /home/testuser
 
 # 复制脚本到容器中
 COPY --chown=testuser:testuser init-dev-server.sh /home/testuser/init-dev-server.sh
+COPY --chown=testuser:testuser test-docker.sh /home/testuser/test-docker.sh
 
 # 设置脚本执行权限
-RUN chmod +x /home/testuser/init-dev-server.sh
+RUN chmod +x /home/testuser/init-dev-server.sh /home/testuser/test-docker.sh
 
 # 设置默认命令
 CMD ["/bin/bash"]
