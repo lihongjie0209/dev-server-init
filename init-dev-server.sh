@@ -255,6 +255,8 @@ install_jdk() {
     echo "2. 安装 OpenJDK 21 (最新 LTS)"
     echo "3. 跳过 JDK 安装"
     
+    local jdk_installed=false
+    
     while true; do
         read -p "请选择 (1-3): " jdk_choice
         case $jdk_choice in
@@ -274,6 +276,7 @@ install_jdk() {
                     
                     # 设置 JAVA_HOME
                     setup_java_environment "17"
+                    jdk_installed=true
                 else
                     log_error "OpenJDK 17 安装失败"
                 fi
@@ -295,6 +298,7 @@ install_jdk() {
                     
                     # 设置 JAVA_HOME
                     setup_java_environment "21"
+                    jdk_installed=true
                 else
                     log_error "OpenJDK 21 安装失败"
                 fi
@@ -309,6 +313,11 @@ install_jdk() {
                 ;;
         esac
     done
+    
+    # 如果 JDK 安装成功，询问是否安装 Maven
+    if [[ "$jdk_installed" == true ]]; then
+        install_maven
+    fi
 }
 
 # 设置 Java 环境变量
@@ -350,6 +359,116 @@ EOF
     else
         log_warning "未找到 Java 安装目录: $java_home"
     fi
+}
+
+# 安装 Maven (仅在 JDK 安装成功后询问)
+install_maven() {
+    echo
+    log_info "Maven 安装选项..."
+    
+    echo -e "${YELLOW}是否安装 Apache Maven？${NC}"
+    echo "1. 是，安装 Maven (推荐用于 Java 项目管理)"
+    echo "2. 否，跳过 Maven 安装"
+    
+    while true; do
+        read -p "请选择 (1-2): " maven_choice
+        case $maven_choice in
+            1)
+                log_info "安装 Apache Maven..."
+                sudo apt-get update
+                sudo apt-get install -y maven
+                
+                # 验证安装
+                local maven_version=$(mvn -version 2>/dev/null | head -1 | cut -d' ' -f3 2>/dev/null || echo "未安装")
+                
+                if [[ "$maven_version" != "未安装" ]]; then
+                    log_success "Maven 安装完成"
+                    log_info "Maven 版本: $maven_version"
+                    
+                    # 配置 Maven 使用阿里云镜像
+                    setup_maven_mirrors
+                else
+                    log_error "Maven 安装失败"
+                fi
+                break
+                ;;
+            2)
+                log_info "跳过 Maven 安装"
+                break
+                ;;
+            *)
+                log_warning "无效选择，请输入 1-2"
+                ;;
+        esac
+    done
+}
+
+# 配置 Maven 镜像源
+setup_maven_mirrors() {
+    log_info "配置 Maven 使用阿里云镜像源..."
+    
+    local maven_home="$HOME/.m2"
+    local settings_file="$maven_home/settings.xml"
+    
+    # 创建 .m2 目录
+    mkdir -p "$maven_home"
+    
+    # 创建 settings.xml 配置文件
+    cat > "$settings_file" << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
+          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  
+  <mirrors>
+    <!-- 阿里云公共仓库 -->
+    <mirror>
+      <id>alimaven</id>
+      <name>aliyun maven</name>
+      <url>https://maven.aliyun.com/repository/public</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+  </mirrors>
+  
+  <profiles>
+    <profile>
+      <id>aliyun</id>
+      <repositories>
+        <repository>
+          <id>aliyun-central</id>
+          <name>阿里云中央仓库</name>
+          <url>https://maven.aliyun.com/repository/central</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+        <repository>
+          <id>aliyun-public</id>
+          <name>阿里云公共仓库</name>
+          <url>https://maven.aliyun.com/repository/public</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+  
+  <activeProfiles>
+    <activeProfile>aliyun</activeProfile>
+  </activeProfiles>
+</settings>
+EOF
+    
+    log_success "Maven 阿里云镜像配置完成"
+    log_info "配置文件位置: $settings_file"
 }
 
 # 创建开发环境目录
@@ -425,6 +544,14 @@ show_summary() {
     local java_version=$(java -version 2>&1 | head -1 | cut -d'"' -f2 2>/dev/null || echo "")
     if [[ -n "$java_version" ]]; then
         echo "✅ JDK 安装完成 ($java_version)"
+        
+        # 检查 Maven 是否安装
+        local maven_version=$(mvn -version 2>/dev/null | head -1 | cut -d' ' -f3 2>/dev/null || echo "")
+        if [[ -n "$maven_version" ]]; then
+            echo "✅ Maven 安装完成 ($maven_version)"
+        else
+            echo "⏭️  Maven 跳过安装"
+        fi
     else
         echo "⏭️  JDK 跳过安装"
     fi
@@ -449,6 +576,11 @@ show_summary() {
     if command -v java &> /dev/null; then
         echo "  java -version            # 检查 Java 版本"
         echo "  javac -version           # 检查 Java 编译器版本"
+        
+        # 如果安装了 Maven，显示 Maven 命令
+        if command -v mvn &> /dev/null; then
+            echo "  mvn -version             # 检查 Maven 版本"
+        fi
     fi
 }
 
