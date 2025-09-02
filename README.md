@@ -26,6 +26,10 @@ curl -fsSL https://raw.githubusercontent.com/lihongjie0209/dev-server-init/main/
   - 配置 Cargo 国内镜像源
   - 自动添加环境变量到 shell 配置文件
 - ✅ **UV 安装**: Python 包管理器
+- ✅ **Node.js 环境**:
+  - 安装最新 LTS 版本
+  - 配置 npm 使用淘宝镜像源
+  - 全局安装 yarn, pnpm, pm2 等常用工具
 - ✅ **开发环境**: 创建常用的开发目录
 - ✅ **tmux 配置**: 提供便捷的终端复用器配置
 
@@ -97,6 +101,7 @@ source ~/.zshrc
 ### 开发工具
 - **Rust**: 通过 rustup 安装，使用阿里云镜像
 - **UV**: Python 包管理器
+- **Node.js**: 最新 LTS 版本，包含 npm, yarn, pnpm, pm2
 
 ## 创建的目录结构
 
@@ -129,6 +134,11 @@ $HOME/
 - 配置 Cargo 使用阿里云 crates.io 镜像
 - 自动添加环境变量到 shell 配置文件
 
+### Node.js 配置
+- 使用 NodeSource 官方仓库安装最新 LTS 版本
+- 配置 npm 使用淘宝镜像源 (registry.npmmirror.com)
+- 全局安装常用包管理器和工具：yarn, pnpm, pm2
+
 ## 常用命令
 
 安装完成后，您可以使用以下命令：
@@ -150,6 +160,13 @@ cargo new myproject            # 创建新的 Rust 项目
 # Python 开发
 uv --version                   # 检查 UV 版本
 uv init myproject              # 创建新的 Python 项目
+
+# Node.js 开发
+node --version                 # 检查 Node.js 版本
+npm --version                  # 检查 npm 版本
+yarn --version                 # 检查 yarn 版本
+pnpm --version                 # 检查 pnpm 版本
+npm init                       # 创建新的 Node.js 项目
 ```
 
 ## 故障排除

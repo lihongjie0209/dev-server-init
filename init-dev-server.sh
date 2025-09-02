@@ -208,6 +208,44 @@ install_uv() {
     log_info "UV 版本: $(uv --version)"
 }
 
+# 安装 Node.js
+install_nodejs() {
+    log_info "安装 Node.js..."
+    
+    # 获取系统版本信息
+    source /etc/os-release
+    
+    # 添加 NodeSource 官方仓库
+    log_info "添加 NodeSource 官方仓库..."
+    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+    
+    # 安装 Node.js
+    log_info "安装 Node.js LTS 版本..."
+    sudo apt-get install -y nodejs
+    
+    # 验证安装
+    local node_version=$(node --version 2>/dev/null || echo "未安装")
+    local npm_version=$(npm --version 2>/dev/null || echo "未安装")
+    
+    if [[ "$node_version" != "未安装" ]]; then
+        log_success "Node.js 安装完成"
+        log_info "Node.js 版本: $node_version"
+        log_info "npm 版本: v$npm_version"
+        
+        # 配置 npm 镜像源（可选，提高国内下载速度）
+        log_info "配置 npm 使用淘宝镜像源..."
+        npm config set registry https://registry.npmmirror.com/
+        
+        # 全局安装一些常用工具
+        log_info "安装常用的全局 npm 包..."
+        npm install -g yarn pnpm pm2
+        
+        log_success "Node.js 环境配置完成"
+    else
+        log_error "Node.js 安装失败"
+    fi
+}
+
 # 创建开发环境目录
 create_dev_directories() {
     log_info "创建开发环境目录..."
@@ -275,6 +313,7 @@ show_summary() {
     echo "✅ Git 配置完成 (用户: $(git config --global user.name), 邮箱: $(git config --global user.email))"
     echo "✅ Rustup 安装完成 (使用阿里云镜像)"
     echo "✅ UV 安装完成"
+    echo "✅ Node.js 安装完成 ($(node --version 2>/dev/null || echo "未安装"))"
     echo "✅ tmux 配置完成"
     echo "✅ 开发目录创建完成"
     echo "================================================="
@@ -288,6 +327,8 @@ show_summary() {
     echo "  htop                     # 查看系统资源"
     echo "  rustc --version          # 检查 Rust 版本"
     echo "  uv --version             # 检查 UV 版本"
+    echo "  node --version           # 检查 Node.js 版本"
+    echo "  npm --version            # 检查 npm 版本"
 }
 
 # 主函数
@@ -309,6 +350,7 @@ main() {
     setup_git
     install_rustup
     install_uv
+    install_nodejs
     create_dev_directories
     setup_tmux
     
