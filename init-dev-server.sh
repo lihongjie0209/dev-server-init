@@ -246,6 +246,112 @@ install_nodejs() {
     fi
 }
 
+# 安装 JDK (可选)
+install_jdk() {
+    log_info "JDK 安装选项..."
+    
+    echo -e "${YELLOW}是否安装 OpenJDK？${NC}"
+    echo "1. 安装 OpenJDK 17 (LTS 推荐)"
+    echo "2. 安装 OpenJDK 21 (最新 LTS)"
+    echo "3. 跳过 JDK 安装"
+    
+    while true; do
+        read -p "请选择 (1-3): " jdk_choice
+        case $jdk_choice in
+            1)
+                log_info "安装 OpenJDK 17..."
+                sudo apt-get update
+                sudo apt-get install -y openjdk-17-jdk
+                
+                # 验证安装
+                local java_version=$(java -version 2>&1 | head -1 | cut -d'"' -f2 2>/dev/null || echo "未安装")
+                local javac_version=$(javac -version 2>&1 | cut -d' ' -f2 2>/dev/null || echo "未安装")
+                
+                if [[ "$java_version" != "未安装" ]]; then
+                    log_success "OpenJDK 17 安装完成"
+                    log_info "Java 版本: $java_version"
+                    log_info "Javac 版本: $javac_version"
+                    
+                    # 设置 JAVA_HOME
+                    setup_java_environment "17"
+                else
+                    log_error "OpenJDK 17 安装失败"
+                fi
+                break
+                ;;
+            2)
+                log_info "安装 OpenJDK 21..."
+                sudo apt-get update
+                sudo apt-get install -y openjdk-21-jdk
+                
+                # 验证安装
+                local java_version=$(java -version 2>&1 | head -1 | cut -d'"' -f2 2>/dev/null || echo "未安装")
+                local javac_version=$(javac -version 2>&1 | cut -d' ' -f2 2>/dev/null || echo "未安装")
+                
+                if [[ "$java_version" != "未安装" ]]; then
+                    log_success "OpenJDK 21 安装完成"
+                    log_info "Java 版本: $java_version"
+                    log_info "Javac 版本: $javac_version"
+                    
+                    # 设置 JAVA_HOME
+                    setup_java_environment "21"
+                else
+                    log_error "OpenJDK 21 安装失败"
+                fi
+                break
+                ;;
+            3)
+                log_info "跳过 JDK 安装"
+                break
+                ;;
+            *)
+                log_warning "无效选择，请输入 1-3"
+                ;;
+        esac
+    done
+}
+
+# 设置 Java 环境变量
+setup_java_environment() {
+    local java_version=$1
+    local java_home="/usr/lib/jvm/java-${java_version}-openjdk-amd64"
+    
+    # 检查 JAVA_HOME 目录是否存在
+    if [[ -d "$java_home" ]]; then
+        log_info "设置 JAVA_HOME 环境变量..."
+        
+        # 确定 shell 配置文件
+        local shell_config=""
+        if [[ -n "$ZSH_VERSION" ]]; then
+            shell_config="$HOME/.zshrc"
+        elif [[ -n "$BASH_VERSION" ]]; then
+            shell_config="$HOME/.bashrc"
+        else
+            shell_config="$HOME/.profile"
+        fi
+        
+        # 检查是否已经添加过 JAVA_HOME
+        if ! grep -q "JAVA_HOME" "$shell_config" 2>/dev/null; then
+            cat >> "$shell_config" << EOF
+
+# Java 环境变量
+export JAVA_HOME=$java_home
+export PATH=\$JAVA_HOME/bin:\$PATH
+EOF
+            log_success "JAVA_HOME 环境变量已添加到 $shell_config"
+        else
+            log_info "JAVA_HOME 环境变量已存在"
+        fi
+        
+        # 为当前会话设置环境变量
+        export JAVA_HOME="$java_home"
+        export PATH="$JAVA_HOME/bin:$PATH"
+        
+    else
+        log_warning "未找到 Java 安装目录: $java_home"
+    fi
+}
+
 # 创建开发环境目录
 create_dev_directories() {
     log_info "创建开发环境目录..."
@@ -314,6 +420,15 @@ show_summary() {
     echo "✅ Rustup 安装完成 (使用阿里云镜像)"
     echo "✅ UV 安装完成"
     echo "✅ Node.js 安装完成 ($(node --version 2>/dev/null || echo "未安装"))"
+    
+    # 检查 JDK 是否安装
+    local java_version=$(java -version 2>&1 | head -1 | cut -d'"' -f2 2>/dev/null || echo "")
+    if [[ -n "$java_version" ]]; then
+        echo "✅ JDK 安装完成 ($java_version)"
+    else
+        echo "⏭️  JDK 跳过安装"
+    fi
+    
     echo "✅ tmux 配置完成"
     echo "✅ 开发目录创建完成"
     echo "================================================="
@@ -329,6 +444,12 @@ show_summary() {
     echo "  uv --version             # 检查 UV 版本"
     echo "  node --version           # 检查 Node.js 版本"
     echo "  npm --version            # 检查 npm 版本"
+    
+    # 如果安装了 Java，显示 Java 相关命令
+    if command -v java &> /dev/null; then
+        echo "  java -version            # 检查 Java 版本"
+        echo "  javac -version           # 检查 Java 编译器版本"
+    fi
 }
 
 # 主函数
@@ -351,6 +472,7 @@ main() {
     install_rustup
     install_uv
     install_nodejs
+    install_jdk
     create_dev_directories
     setup_tmux
     
