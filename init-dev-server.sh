@@ -139,23 +139,26 @@ setup_git() {
 
 # 安装 Rustup (使用阿里云镜像)
 install_rustup() {
-    log_info "安装 Rustup (使用阿里云镜像)..."
+    echo -e "${BLUE}[INFO]${NC} 安装 Rustup (使用阿里云镜像)..."
     
-    # 设置 Rustup 镜像环境变量
-    export RUSTUP_DIST_SERVER="https://mirrors.aliyun.com/rustup"
-    export RUSTUP_UPDATE_ROOT="https://mirrors.aliyun.com/rustup/rustup"
+    # 设置阿里云镜像
+    export RUSTUP_DIST_SERVER=https://mirrors.aliyun.com/rustup
+    export RUSTUP_UPDATE_ROOT=https://mirrors.aliyun.com/rustup/rustup
     
-    # 下载并安装 rustup
-    curl --proto '=https' --tlsv1.2 -sSf https://mirrors.aliyun.com/rustup/rustup-init.sh | sh -s -- -y
+    # 下载并运行 rustup 安装脚本
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     
-    # 添加到当前会话的 PATH
-    source "$HOME/.cargo/env"
+    # 添加到 PATH
+    if [ -f "$HOME/.cargo/env" ]; then
+        source $HOME/.cargo/env
+    else
+        export PATH="$HOME/.cargo/bin:$PATH"
+    fi
     
-    # 设置 Cargo 镜像源
-    mkdir -p "$HOME/.cargo"
-    cat > "$HOME/.cargo/config.toml" << 'EOF'
+    # 配置中国镜像源
+    mkdir -p ~/.cargo
+    cat > ~/.cargo/config.toml << 'EOF'
 [source.crates-io]
-registry = "https://github.com/rust-lang/crates.io-index"
 replace-with = 'aliyun'
 
 [source.aliyun]
@@ -168,30 +171,12 @@ index = "https://code.aliyun.com/rustcc/crates.io-index.git"
 git-fetch-with-cli = true
 EOF
     
-    # 添加环境变量到 shell 配置文件
-    local shell_config=""
-    if [[ -n "$ZSH_VERSION" ]]; then
-        shell_config="$HOME/.zshrc"
-    elif [[ -n "$BASH_VERSION" ]]; then
-        shell_config="$HOME/.bashrc"
+    echo -e "${GREEN}[SUCCESS]${NC} Rustup 安装完成"
+    if command -v rustc &> /dev/null; then
+        echo -e "${BLUE}[INFO]${NC} 当前版本: $(rustc --version)"
     else
-        shell_config="$HOME/.profile"
+        echo -e "${YELLOW}[WARNING]${NC} 请重启终端以使 Rust 生效"
     fi
-    
-    # 检查是否已经添加过环境变量
-    if ! grep -q "RUSTUP_DIST_SERVER" "$shell_config" 2>/dev/null; then
-        cat >> "$shell_config" << 'EOF'
-
-# Rust 环境变量 (阿里云镜像)
-export RUSTUP_DIST_SERVER="https://mirrors.aliyun.com/rustup"
-export RUSTUP_UPDATE_ROOT="https://mirrors.aliyun.com/rustup/rustup"
-export PATH="$HOME/.cargo/bin:$PATH"
-EOF
-    fi
-    
-    log_success "Rustup 安装完成 (使用阿里云镜像)"
-    log_info "Rust 版本: $(rustc --version)"
-    log_info "Cargo 版本: $(cargo --version)"
 }
 
 # 安装 UV (Python 包管理器)
